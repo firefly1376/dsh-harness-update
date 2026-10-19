@@ -5,19 +5,6 @@ DeepSeek Harness（DSH）本体自更新插件：设置页一行完成「检查�
 Self-update for DeepSeek Harness **git-source** installs — version check, one-click update
 (pull → install → clean → build), rollback, per-step timing, and the failed step's real output tail.
 
-## 它修掉了什么
-
-用来替代已停更的 dsh-self-update（0.4.0）。那个插件有三个硬伤：
-
-1. Windows 上 pnpm/npm 是 .cmd 外壳，Node 不能直接 spawn → 永远卡在「安装依赖」失败，
-   而且 tail 是空的（几毫秒就返回，看起来像命令根本没执行）。
-2. git fetch 超时硬编码 180s，而首次冷 fetch 这个 27MB 的 pack 需要约 240s → 必然失败。
-3. 「检查时间」只在成功后落盘 → 失败时界面转一圈、时间不变，正是「点了没反应」的观感。
-
-对应地，本插件：按 PATH+PATHEXT 解析命令（跳过 Windows 上无法执行的 POSIX 脚本），
-.cmd/.bat 一律经 ComSpec 以 windowsVerbatimArguments 启动，每一步都保留输出 tail，
-检查尝试后立即写入检查时间，fetch 超时放宽到 15 分钟。
-
 ## 安装
 
 前置条件：DSH 是 **git 检出**安装（不是 npm 全局安装），且 git 与 pnpm 在 PATH 上。
