@@ -1,0 +1,15 @@
+# dsh-harness-update — bundle patch (inserted into the web profile roster).
+#
+# Adds one settings row (通用设置 -> DSH 版本) and the host routes under
+# /harness-update/api. repoRoot is auto-detected: DSH_REPO_ROOT, then the
+# checkout owning the running apps/cli entry, then the current directory.
+# Pin it here only when detection cannot work.
+- insert:
+    - id: harness-update
+      name: 'dsh-harness-update'
+      config:
+        remote: origin
+        branch: master
+        # repoRoot: 'E:/path/to/deepseek-harness'
+        # pnpmCommand: 'pnpm'
+        # stateFile: 'E:/path/to/harness-update-state.json'
