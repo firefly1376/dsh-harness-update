@@ -35,6 +35,8 @@ Self-update for DeepSeek Harness **git-source** installs — version check, one-
 - 更新：git pull --ff-only → pnpm install --frozen-lockfile → pnpm clean → pnpm build:official
 - 回滚：git reset --hard 到更新前的 SHA，再跑同样的三步构建
 - 每一步显示状态与耗时（✓ / ✕ / ●），失败时把该步的真实输出 tail 显示在下面
+- 上一次更新的步骤日志只在「运行中 / 失败 / 待重启」时显示，重启 DSH 或已是最新时自动收起
+- 没有可用更新时「更新」按钮为禁用态，悬停提示原因
 
 更新或回滚完成后需要**重启 DSH** 才会加载新构建；界面会提示「已更新，重启 DSH 后生效」，
 重启后该提示自动消失。
