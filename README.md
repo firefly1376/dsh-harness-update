@@ -41,6 +41,11 @@ Self-update for DeepSeek Harness **git-source** installs — version check, one-
 更新或回滚完成后需要**重启 DSH** 才会加载新构建；界面会提示「已更新，重启 DSH 后生效」，
 重启后该提示自动消失。
 
+更新途中（`clean` / `build` 阶段）客户端的构建产物会被整体替换，**已打开的页面会跟着热重载，
+甚至白屏**——这是预期内的，不是崩溃。判断能不能重启看进度，不看页面：面板显示「已更新，重启
+DSH 后生效」就可以重启；这时重启之后新版本才会生效。构建还在跑时重启会把这次更新记成
+「上一次更新被中断」，得重新点一次。
+
 ## 配置
 
 在 profile 的 cordis.patch.yml 里给插入项加 config（键全部可选）：
@@ -75,6 +80,18 @@ Self-update for DeepSeek Harness **git-source** installs — version check, one-
 可以脱离 DSH 单独验证命令解析与执行：
 
     node --input-type=module -e "const m = await import('./lib/index.js'); console.log(m.__internals.resolveCommand('pnpm'))"
+
+## 变更记录
+
+### 0.1.2
+
+- 设置页在「更新中 / 回滚中 / 待重启」时增加一行说明：构建期页面可能自动刷新或白屏，属预期，
+  完成后需重启。之前这一步只能从「页面突然白了」自己猜。
+- README 补充重启时机的判定口径。
+
+### 0.1.1
+
+- 无更新时更新按钮呈禁用态；旧步骤日志按需显示。
 
 ## 许可
 
