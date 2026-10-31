@@ -4,12 +4,18 @@
 # /harness-update/api. repoRoot is auto-detected: DSH_REPO_ROOT, then the
 # checkout owning the running apps/cli entry, then the current directory.
 # Pin it here only when detection cannot work.
+#
+# channel: release (default) follows the newest official release tag (dsh-v*,
+# stable or rc line) and updates with `git checkout --detach <tag>`;
+# channel: branch keeps the old "follow origin/<branch>" behaviour.
 - insert:
     - id: harness-update
       name: 'dsh-harness-update'
       config:
         remote: origin
-        branch: master
+        channel: release
+        tagPrefix: dsh-v
+        # branch: master            # only used when channel: branch
         # repoRoot: 'E:/path/to/deepseek-harness'
         # pnpmCommand: 'pnpm'
         # stateFile: 'E:/path/to/harness-update-state.json'
