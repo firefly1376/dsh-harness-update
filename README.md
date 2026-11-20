@@ -42,6 +42,11 @@ Self-update for DeepSeek Harness **git-source** installs — version check, one-
 - 每一步显示状态与耗时（✓ / ✕ / ●），失败时把该步的真实输出 tail 显示在下面
 - 上一次更新的步骤日志只在「运行中 / 失败 / 待重启」时显示，重启 DSH 或已是最新时自动收起
 - 没有可用更新时「更新」按钮为禁用态，悬停提示原因
+- **代理是自动的**：面板会显示「网络：http://127.0.0.1:7897（系统代理）」或「网络：直连…」。
+  git 自己没有「用 Windows 系统代理」这个能力，只认 `http.proxy` / `http_proxy` 环境变量，
+  所以插件每次调用都读一次系统代理（`HKCU\...\Internet Settings`）并显式交给 git 与 pnpm。
+  Clash Verge / v2rayN 这类只改系统代理、不改 hosts 的工具因此能直接工作；Steam++ 那种改 hosts
+  的加速器则走直连也不受影响。
 
 更新或回滚完成后需要**重启 DSH** 才会加载新构建；界面会提示「已更新，重启 DSH 后生效」，
 重启后该提示自动消失。
@@ -62,6 +67,7 @@ DSH 后生效」就可以重启；这时重启之后新版本才会生效。构�
 | channel | release | `release` = 跟官方发布 tag（推荐）；`branch` = 老行为，跟远端分支上的 package.json 版本 |
 | tagPrefix | dsh-v | release 通道认的 tag 前缀 |
 | branch | master | 跟随的分支，只在 `channel: branch` 时生效 |
+| proxy | auto | `auto` = 每次调用读 Windows 系统代理（改了代理不用重启）；`none` = 强制直连；也可写 `http://host:port` 固定一个 |
 | pnpmCommand | pnpm | pnpm 路径或命令名（按 PATH+PATHEXT 解析） |
 | stateFile | ~/.dsh-harness-update/state.json | 状态文件（进度、上次检查时间、回滚点） |
 | checkTimeoutMs | 900000 | 单次 git fetch 超时 |
@@ -84,16 +90,32 @@ DSH 后生效」就可以重启；这时重启之后新版本才会生效。构�
 - 要求 DSH >= 0.2.0-rc.2（见 package.json 的 dsh.engines）。
 - 首次 git fetch 可能较慢（该仓库的 pack 约 27MB）；慢速直连时请确认代理可用，
   否则会等到 checkTimeoutMs 超时。
+- **代理只认「交给它的那个」**：Windows 系统代理会被自动读取并注入 git/pnpm；但若你的加速器
+  是改 hosts（Steam++/Watt）或纯 TUN 模式，插件看到的就是「无系统代理 → 直连」，这通常也能通。
+  想强制某个代理就写 `proxy: http://127.0.0.1:7897`，想强制直连写 `proxy: none`。
 - Windows 专属处理已内置（.cmd/PATHEXT/ComSpec），其他平台走普通 PATH 解析。
 
 ## 自测入口
 
 宿主半边导出 __internals = { resolveCommand, runCommand, tailOf, trackedChanges, parseVersion,
-compareVersions, isReleaseVersion, createUpdater }，可以脱离 DSH 单独验证：
+compareVersions, isReleaseVersion, toProxyUrl, windowsSystemProxy, proxyEnv, createUpdater }，
+可以脱离 DSH 单独验证：
 
-    node --input-type=module -e "const m = await import('./lib/index.js'); console.log(m.__internals.compareVersions('0.2.1-rc.5','0.2.1-rc.3'))"
+    node --input-type=module -e "const m = await import('./lib/index.js'); console.log(m.__internals.windowsSystemProxy())"
 
 ## 变更记录
+
+### 0.1.4
+
+- **支持系统代理**：新增 `proxy`（默认 `auto`）。每次调用读
+  `HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings` 的 `ProxyEnable`/`ProxyServer`，
+  把代理以 `HTTP(S)_PROXY` 注入 git 与 pnpm。原因：git/libcurl 在 Windows 上**不使用**系统代理，
+  所以 Clash Verge 这类只开系统代理的工具会让 git 直连并报
+  `unable to access ... Failed to connect to github.com port 443`；Steam++ 改的是 hosts，因此看起来
+  「能识别」。实测：不注入 21.3s 后失败，注入后 2.0s 成功。改了代理无需重启插件（每次读一次）。
+- 面板新增一行「网络：…」，直接显示当前用的代理或「直连」，把这类失败和插件本身的故障分开。
+- 「工作区有未提交改动」的暂停提示现在给出三条可执行的处理办法（stash / 丢弃生成物 / 提交），
+  而不是只报一句「已暂停」。
 
 ### 0.1.3
 

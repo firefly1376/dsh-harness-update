@@ -8,6 +8,13 @@
 # channel: release (default) follows the newest official release tag (dsh-v*,
 # stable or rc line) and updates with `git checkout --detach <tag>`;
 # channel: branch keeps the old "follow origin/<branch>" behaviour.
+#
+# proxy: auto (default) reads the Windows system proxy at every call, so turning
+# an accelerator on later needs no restart. git has no "use the system proxy"
+# support of its own, which is why a proxy-enabled accelerator still produces
+# "unable to access"; this plugin therefore hands the proxy to git and pnpm
+# explicitly. Set proxy: none to force a direct connection, or a URL such as
+# http://127.0.0.1:7897 to pin one.
 - insert:
     - id: harness-update
       name: 'dsh-harness-update'
@@ -15,6 +22,7 @@
         remote: origin
         channel: release
         tagPrefix: dsh-v
+        # proxy: auto               # auto | none | http://host:port
         # branch: master            # only used when channel: branch
         # repoRoot: 'E:/path/to/deepseek-harness'
         # pnpmCommand: 'pnpm'
