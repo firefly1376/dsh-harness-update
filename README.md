@@ -106,6 +106,26 @@ compareVersions, isReleaseVersion, toProxyUrl, windowsSystemProxy, proxyEnv, cre
 
 ## 变更记录
 
+### 0.1.6
+
+- **检查失败时给出可执行的诊断**：以前只把 git 的原始报错贴出来，而
+  `error: cannot open '.git/FETCH_HEAD': Permission denied` 里的 "Permission denied" 极易被读成
+  「远端拒了我 / SSH 密钥不对」，实际是**本机写文件被拒**（Windows 上最常见是只读属性）。现在会先
+  探测 `.git` 下 `FETCH_HEAD`/`HEAD`/`index`/`refs/**` 是否可写，命中就直接报出具体是哪个文件不可写，
+  并给出 `attrib -R` 修复命令；同时区分 SSH 无密钥、凭据缺失、仓库不存在、DNS、连不上这几类，
+  各给各的修法。端到端实测：把 `FETCH_HEAD` 设成只读 → 面板直接点名该文件 + 修复命令；
+  `attrib -R` 之后同一次检查恢复正常。
+
+### 0.1.5
+
+- **修「工作区永远有改动」的误判**：`git status --porcelain` 的行是 `XY<空格>路径`，未暂存项
+  （` M file`）**行首就是一个空格**。旧代码对整个输出 `.trim()`，吃掉那个空格后路径整体左移一位，
+  于是被 `regenerateTracked` 匹配不到、明明配置了仍报「有未提交改动」。现在按行解析、只丢空行，
+  并同时兼容 CRLF。
+- 新增 `regenerateTracked`：列出「每次启动会被钩子重写」的已跟踪文件（如本机的
+  `packages/bundle/web-app/presets/*.patch.yml`）。切换前只丢弃这些文件的本地改动并记录在
+  步骤的 `discarded` 里，真正的用户改动仍然拦住更新。不配置时行为不变（全算阻塞）。
+
 ### 0.1.4
 
 - **支持系统代理**：新增 `proxy`（默认 `auto`）。每次调用读
@@ -117,13 +137,6 @@ compareVersions, isReleaseVersion, toProxyUrl, windowsSystemProxy, proxyEnv, cre
 - 面板新增一行「网络：…」，直接显示当前用的代理或「直连」，把这类失败和插件本身的故障分开。
 - 「工作区有未提交改动」的暂停提示现在给出三条可执行的处理办法（stash / 丢弃生成物 / 提交），
   而不是只报一句「已暂停」。
-- **修「工作区永远有改动」的误判**：`git status --porcelain` 的行是 `XY<空格>路径`，未暂存项
-  （` M file`）**行首就是一个空格**。旧代码对整个输出 `.trim()`，吃掉那个空格后路径整体左移一位，
-  于是被 `regenerateTracked` 匹配不到、明明配置了仍报「有未提交改动」。现在按行解析、只丢空行，
-  并同时兼容 CRLF。
-- 新增 `regenerateTracked`：列出「每次启动会被钩子重写」的已跟踪文件（如本机的
-  `packages/bundle/web-app/presets/*.patch.yml`）。切换前只丢弃这些文件的本地改动并记录在
-  步骤的 `discarded` 里，真正的用户改动仍然拦住更新。不配置时行为不变（全算阻塞）。
 
 ### 0.1.3
 
