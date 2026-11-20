@@ -15,6 +15,12 @@
 # "unable to access"; this plugin therefore hands the proxy to git and pnpm
 # explicitly. Set proxy: none to force a direct connection, or a URL such as
 # http://127.0.0.1:7897 to pin one.
+#
+# regenerateTracked: repo-relative globs for tracked files that an install/boot
+# hook rewrites on every run (this deployment's tune-bundle-presets.mjs touches
+# packages/bundle/web-app/presets/*.patch.yml). Their local modification is not
+# user work, so the checkout discards it instead of stalling with
+# "有未提交的已跟踪改动". Leave empty to treat every modification as a blocker.
 - insert:
     - id: harness-update
       name: 'dsh-harness-update'
@@ -23,6 +29,7 @@
         channel: release
         tagPrefix: dsh-v
         # proxy: auto               # auto | none | http://host:port
+        # regenerateTracked: []     # e.g. ['packages/bundle/web-app/presets/*.patch.yml']
         # branch: master            # only used when channel: branch
         # repoRoot: 'E:/path/to/deepseek-harness'
         # pnpmCommand: 'pnpm'

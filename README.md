@@ -68,6 +68,7 @@ DSH 后生效」就可以重启；这时重启之后新版本才会生效。构�
 | tagPrefix | dsh-v | release 通道认的 tag 前缀 |
 | branch | master | 跟随的分支，只在 `channel: branch` 时生效 |
 | proxy | auto | `auto` = 每次调用读 Windows 系统代理（改了代理不用重启）；`none` = 强制直连；也可写 `http://host:port` 固定一个 |
+| regenerateTracked | [] | 数组，repo 相对路径或 `*` 通配。列出的已跟踪文件视为「钩子生成物」：切换 tag 前丢弃其本地改动而不是拦住更新。真改动仍会拦 |
 | pnpmCommand | pnpm | pnpm 路径或命令名（按 PATH+PATHEXT 解析） |
 | stateFile | ~/.dsh-harness-update/state.json | 状态文件（进度、上次检查时间、回滚点） |
 | checkTimeoutMs | 900000 | 单次 git fetch 超时 |
@@ -116,6 +117,13 @@ compareVersions, isReleaseVersion, toProxyUrl, windowsSystemProxy, proxyEnv, cre
 - 面板新增一行「网络：…」，直接显示当前用的代理或「直连」，把这类失败和插件本身的故障分开。
 - 「工作区有未提交改动」的暂停提示现在给出三条可执行的处理办法（stash / 丢弃生成物 / 提交），
   而不是只报一句「已暂停」。
+- **修「工作区永远有改动」的误判**：`git status --porcelain` 的行是 `XY<空格>路径`，未暂存项
+  （` M file`）**行首就是一个空格**。旧代码对整个输出 `.trim()`，吃掉那个空格后路径整体左移一位，
+  于是被 `regenerateTracked` 匹配不到、明明配置了仍报「有未提交改动」。现在按行解析、只丢空行，
+  并同时兼容 CRLF。
+- 新增 `regenerateTracked`：列出「每次启动会被钩子重写」的已跟踪文件（如本机的
+  `packages/bundle/web-app/presets/*.patch.yml`）。切换前只丢弃这些文件的本地改动并记录在
+  步骤的 `discarded` 里，真正的用户改动仍然拦住更新。不配置时行为不变（全算阻塞）。
 
 ### 0.1.3
 
